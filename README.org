@@ -1,0 +1,45 @@
+* GNOME-cleaned
+  Suckless looking GNOME applications.
+
+** Why?
+   - What's wrong with GNOME apps?
+     I hate too bars, not even a single one.
+   - Why not go purely suckless?
+     Many "suckless" programs still lack few features. Not always, but sometimes. They failed me in times I needed them the most.
+     + *zathura*
+       1. Selecting and copying text is a nightmare.
+       2. PDF annotations are far dreams. I had a python script the reads the annotations from the currently open document and show them in a separate terminal window. The script didn't always work well and only showed a part of the annotations. One day I had an exam. I was reading the annotations using that script with zathura and I kept wondering why the equations are so weird. The day of the exam, I opened with evince... And it all made sense then... Now how about adding annotations with zathura? I doubt this can be available any time soon...
+     + *sxiv*
+       1. Mainly, it still can't read few types of images.
+       2. There are many other missing stuff besides being ugly looking by default. But my [[https://github.com/Naheel-Azawy/sxiv][fork]] fixed those issues.
+       3. Honestly, sxiv is still my default viewer. EOG still can't replace it. But maybe some day.
+     + *mpv*
+       1. Can't complain much here... Maybe will keep using it.
+
+** Applications
+   - [X] evince
+   - [X] eog
+   - [ ] totem
+
+** Key bindings
+   | Key | Action      |
+   |-----+-------------|
+   | q   | quit        |
+   | b   | toggle bars |
+
+** Extra tips
+   If you hate ugly frames, add this to ~~/.config/gtk-3.0/gtk.css~.
+   #+begin_src css
+     decoration {
+         padding-top: 0px;
+         padding-bottom: 0px;
+         padding-right: 0px;
+         padding-left: 0px;
+     }
+   #+end_src
+
+** Build and install
+   #+begin_src shell
+     make
+     sudo make install
+   #+end_src

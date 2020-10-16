@@ -1,0 +1,115 @@
+diff --git a/shell/ev-application.c b/shell/ev-application.c
+index ed6ea70f..007fe014 100644
+--- a/shell/ev-application.c
++++ b/shell/ev-application.c
+@@ -953,6 +953,7 @@ ev_application_startup (GApplication *gapplication)
+           "win.add-bookmark",           "<Ctrl>D", NULL,
+           "win.delete-bookmark",        "<Ctrl><Shift>D", NULL,
+           "win.close",                  "<Ctrl>W", NULL,
++          "win.close",                  "q", NULL,
+           "win.escape",                 "Escape", NULL,
+           "win.find",                   "<Ctrl>F", "slash", NULL,
+           "win.find-next",              "<Ctrl>G", "F3", NULL,
+@@ -973,6 +974,7 @@ ev_application_startup (GApplication *gapplication)
+           "win.zoom-in",                "plus", "<Ctrl>plus", "KP_Add", "<Ctrl>KP_Add", "equal", "<Ctrl>equal", NULL,
+           "win.zoom-out",               "minus", "<Ctrl>minus", "KP_Subtract", "<Ctrl>KP_Subtract", NULL,
+           "win.show-side-pane",         "F9", NULL,
++          "win.toggle-toolbar",         "b", NULL,
+           "win.fullscreen",             "F11", NULL,
+           "win.presentation",           "F5", "<Shift>F5", NULL,
+           "win.continuous",             "c", NULL,
+diff --git a/shell/ev-window.c b/shell/ev-window.c
+index 4b47a014..01532a56 100644
+--- a/shell/ev-window.c
++++ b/shell/ev-window.c
+@@ -2462,6 +2462,34 @@ ev_window_open_uri (EvWindow       *ev_window,
+ 	}
+ }
+ 
++static void
++ev_window_view_set_toolbar (EvWindow *window, gint state)
++{
++
++	EvWindowPrivate *priv = GET_PRIVATE (window);
++
++	gboolean toolbar;
++	gboolean presentation;
++
++	presentation = EV_WINDOW_IS_PRESENTATION (priv);
++
++	switch (state) {
++	case 0:
++	case 1:
++		toolbar = !((gboolean) state);
++		break;
++	case 2:
++		toolbar = ((priv->chrome & EV_CHROME_TOOLBAR) != 0  ||
++			   (priv->chrome & EV_CHROME_RAISE_TOOLBAR) != 0) &&
++			!presentation;
++		break;
++	}
++
++	update_chrome_flag (window, EV_CHROME_TOOLBAR, !toolbar);
++
++	set_widget_visibility (priv->toolbar, !toolbar);
++}
++
+ void
+ ev_window_open_document (EvWindow       *ev_window,
+ 			 EvDocument     *document,
+@@ -4618,6 +4646,7 @@ ev_window_fullscreen_toolbar_leave_notify (GtkWidget *widget,
+ static void
+ ev_window_run_fullscreen (EvWindow *window)
+ {
++	return;
+ 	EvWindowPrivate *priv = GET_PRIVATE (window);
+ 	gboolean fullscreen_window = TRUE;
+ 
+@@ -4738,6 +4767,16 @@ ev_window_cmd_view_fullscreen (GSimpleAction *action,
+ 	g_simple_action_set_state (action, state);
+ }
+ 
++static void
++ev_window_view_cmd_toggle_toolbar (GSimpleAction *action,
++				   GVariant	 *state,
++				   gpointer	  user_data)
++{
++
++	EvWindow *window = user_data;
++	ev_window_view_set_toolbar (window, 2);
++}
++
+ static void
+ ev_window_inhibit_screensaver (EvWindow *window)
+ {
+@@ -6466,6 +6505,7 @@ static const GActionEntry actions[] = {
+ 	{ "continuous", NULL, NULL, "true", ev_window_cmd_continuous },
+ 	{ "dual-page", NULL, NULL, "false", ev_window_cmd_dual },
+ 	{ "dual-odd-left", NULL, NULL, "false", ev_window_cmd_dual_odd_pages_left },
++	{ "toggle-toolbar", NULL, NULL, "true", ev_window_view_cmd_toggle_toolbar },
+ 	{ "rtl", NULL, NULL, "false", ev_window_cmd_rtl },
+ 	{ "show-side-pane", NULL, NULL, "false", ev_window_view_cmd_toggle_sidebar },
+ 	{ "inverted-colors", NULL, NULL, "false", ev_window_cmd_view_inverted_colors },
+@@ -7939,6 +7979,9 @@ ev_window_init (EvWindow *ev_window)
+ 			   NULL, 0,
+ 			   GDK_ACTION_COPY);
+ 	gtk_drag_dest_add_uri_targets (GTK_WIDGET (ev_window));
++
++	/* Hide the header bar */
++	ev_window_view_set_toolbar (ev_window, FALSE);
+ }
+ 
+ /**
+diff --git a/shell/evince.css b/shell/evince.css
+index 2f55584a..344b8dfa 100644
+--- a/shell/evince.css
++++ b/shell/evince.css
+@@ -17,7 +17,7 @@
+ }
+ 
+ evview {
+-    background-color: @theme_bg_color;
++    background-color: black;
+ }
+ 
+ evview:selected {

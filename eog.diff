@@ -1,0 +1,103 @@
+diff --git a/src/eog-application.c b/src/eog-application.c
+index 69a5c060..3e2c16e6 100644
+--- a/src/eog-application.c
++++ b/src/eog-application.c
+@@ -206,6 +206,7 @@ eog_application_init_accelerators (GtkApplication *application)
+ 		"win.save",		"<Ctrl>s", NULL ,
+ 		"win.save-as",		"<Ctrl><shift>s", NULL,
+ 		"win.close",		"<Ctrl>w", NULL,
++		"win.close",		"q", NULL,
+ 		"win.close-all",	"<Ctrl>q", NULL,
+ 		"win.print",		"<Ctrl>p", NULL,
+ 		"win.properties",	"<Alt>Return", NULL,
+@@ -236,6 +237,7 @@ eog_application_init_accelerators (GtkApplication *application)
+ 		"win.toggle-zoom-fit",	"F", NULL,
+ 		"win.toggle-gear-menu",	"F10", NULL,
+ 		"win.pause-slideshow",	"p", NULL,
++		"win.toggle-toolbar",   "b", NULL,
+ 
+ 		NULL /* Terminating NULL */
+ 	};
+diff --git a/src/eog-window.c b/src/eog-window.c
+index a8b720de..8189d020 100644
+--- a/src/eog-window.c
++++ b/src/eog-window.c
+@@ -133,6 +133,7 @@ struct _EogWindowPrivate {
+         GtkWidget           *sidebar;
+         GtkWidget           *thumbview;
+         GtkWidget           *statusbar;
++        GtkWidget           *headerbar;
+         GtkWidget           *nav;
+ 	GtkWidget           *message_area;
+ 	GtkWidget           *properties_dlg;
+@@ -3962,6 +3963,44 @@ readonly_state_handler (GSimpleAction *action,
+ 	           g_action_get_name (G_ACTION (action)));
+ }
+ 
++static void
++eog_window_view_set_toolbar (EogWindow *window, gint state)
++{
++  EogWindowPrivate *priv = window->priv;
++
++  switch (state) {
++  case 0:
++  case 1:
++    if ((gboolean) state) {
++      gtk_widget_show (priv->headerbar);
++      gtk_widget_show (priv->statusbar);
++    } else {
++      gtk_widget_hide (priv->headerbar);
++      gtk_widget_hide (priv->statusbar);
++    }
++    break;
++  case 2:
++    if (gtk_widget_is_visible (priv->headerbar)) {
++      gtk_widget_hide (priv->headerbar);
++      gtk_widget_hide (priv->statusbar);
++    } else {
++      gtk_widget_show (priv->headerbar);
++      gtk_widget_show (priv->statusbar);
++    }
++    break;
++  }
++}
++
++static void
++eog_window_view_cmd_toggle_toolbar (GSimpleAction *action,
++				   GVariant	 *state,
++				   gpointer	  user_data)
++{
++
++	EogWindow *window = user_data;
++	eog_window_view_set_toolbar (window, 2);
++}
++
+ static const GActionEntry window_actions[] = {
+ 	/* Stateless actions on the window. */
+ 	{ "open",          eog_window_action_file_open },
+@@ -4006,6 +4045,7 @@ static const GActionEntry window_actions[] = {
+ 	{ "view-fullscreen", NULL, NULL, "false", eog_window_action_toggle_fullscreen },
+ 	{ "pause-slideshow", NULL, NULL, "false", eog_window_action_pause_slideshow },
+ 	{ "toggle-zoom-fit", NULL, NULL, "true",  eog_window_action_toggle_zoom_fit },
++    { "toggle-toolbar",  NULL, NULL, "true",  eog_window_view_cmd_toggle_toolbar },
+ };
+ 
+ static void
+@@ -4208,6 +4248,7 @@ eog_window_construct_ui (EogWindow *window)
+ 	gtk_widget_show (priv->box);
+ 
+ 	headerbar = gtk_header_bar_new ();
++    priv->headerbar = headerbar;
+ 	gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (headerbar), TRUE);
+ 	gtk_header_bar_set_title (GTK_HEADER_BAR (headerbar),
+ 				  g_get_application_name ());
+@@ -4451,6 +4492,9 @@ eog_window_construct_ui (EogWindow *window)
+ 	}
+ 
+ 	eog_window_set_drag_dest (window);
++
++    // Hide toolbar
++    eog_window_view_set_toolbar (window, FALSE);
+ }
+ 
+ static void
